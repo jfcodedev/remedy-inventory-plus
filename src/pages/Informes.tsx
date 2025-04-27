@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useVentas, useProductos, useClientes, useProveedores, usePedidos } from "@/lib/store";
 import { Button } from "@/components/ui/button";
@@ -23,7 +22,6 @@ import {
   TooltipProps
 } from 'recharts';
 
-// Define proper types for the data objects
 interface VentaFiltrada {
   id: string;
   clienteId: string;
@@ -70,14 +68,13 @@ const Informes = () => {
   const [tipoInforme, setTipoInforme] = useState("diario");
   const [fechaInicio, setFechaInicio] = useState("");
   const [fechaFin, setFechaFin] = useState("");
-  const [clienteSeleccionado, setClienteSeleccionado] = useState("");
+  const [clienteSeleccionado, setClienteSeleccionado] = useState("_all");
   const [ventasFiltradas, setVentasFiltradas] = useState<VentaFiltrada[]>([]);
   const [productosMasVendidos, setProductosMasVendidos] = useState<ProductoVendido[]>([]);
   const [datosGraficoVentas, setDatosGraficoVentas] = useState<DatosGrafico[]>([]);
   const [datosGraficoGanancias, setDatosGraficoGanancias] = useState<DatosGanancias[]>([]);
   
   useEffect(() => {
-    // Establecer fechas por defecto
     const hoy = new Date();
     
     if (!fechaFin) {
@@ -102,30 +99,26 @@ const Informes = () => {
   useEffect(() => {
     if (!fechaInicio || !fechaFin) return;
     
-    // Filtrar ventas por fechas y cliente
     const inicio = new Date(fechaInicio);
     const fin = new Date(fechaFin);
-    fin.setHours(23, 59, 59, 999); // Fin del día
+    fin.setHours(23, 59, 59, 999);
     
     let ventasFiltradas = ventas.filter(venta => {
       const fechaVenta = new Date(venta.fecha);
       return fechaVenta >= inicio && fechaVenta <= fin;
     });
     
-    if (clienteSeleccionado) {
+    if (clienteSeleccionado !== "_all") {
       ventasFiltradas = ventasFiltradas.filter(venta => venta.clienteId === clienteSeleccionado);
     }
     
     setVentasFiltradas(ventasFiltradas as VentaFiltrada[]);
     
-    // Preparar datos para reportes
     calcularProductosMasVendidos(ventasFiltradas as VentaFiltrada[]);
     prepararDatosGraficos(ventasFiltradas as VentaFiltrada[]);
-    
   }, [fechaInicio, fechaFin, clienteSeleccionado, ventas]);
   
   const calcularProductosMasVendidos = (ventasFiltradas: VentaFiltrada[]) => {
-    // Contador de productos vendidos
     const contadorProductos: Record<string, { id: string; cantidad: number; total: number }> = {};
     
     ventasFiltradas.forEach(venta => {
@@ -143,11 +136,9 @@ const Informes = () => {
       });
     });
     
-    // Convertir a array y ordenar
     const productosArray = Object.values(contadorProductos);
     productosArray.sort((a, b) => b.cantidad - a.cantidad);
     
-    // Añadir información de productos
     const productosMasVendidos = productosArray.map(item => {
       const producto = productos.find(p => p.id === item.id);
       return {
@@ -169,7 +160,6 @@ const Informes = () => {
       return;
     }
     
-    // Agrupar ventas por fecha
     const ventasPorFecha: Record<string, DatosGrafico> = {};
     
     ventasFiltradas.forEach(venta => {
@@ -186,7 +176,6 @@ const Informes = () => {
       }
     });
     
-    // Calcular ganancias (margen de cada producto vendido)
     const gananciasPorFecha: Record<string, DatosGanancias> = {};
     
     ventasFiltradas.forEach(venta => {
@@ -208,7 +197,6 @@ const Informes = () => {
       });
     });
     
-    // Convertir a arrays para los gráficos y ordenar por fecha
     const datosVentas = Object.values(ventasPorFecha).sort((a, b) => 
       new Date(a.fecha).getTime() - new Date(b.fecha).getTime()
     );
@@ -233,19 +221,15 @@ const Informes = () => {
       };
     }
     
-    // Calcular métricas
     const totalVentas = ventasFiltradas.reduce((sum, venta) => sum + venta.precioTotal, 0);
     const totalProductos = ventasFiltradas.reduce(
       (sum, venta) => sum + venta.productos.reduce((sum, prod) => sum + prod.cantidad, 0), 0
     );
     
-    // Clientes únicos
     const clientesUnicos = new Set(ventasFiltradas.map(venta => venta.clienteId));
     
-    // Venta promedio
     const ventaPromedio = totalVentas / ventasFiltradas.length;
     
-    // Ganancia bruta y margen
     let costoTotal = 0;
     let gananciaTotal = 0;
     
@@ -275,10 +259,9 @@ const Informes = () => {
   const datosResumen = obtenerDatosResumen();
   
   const descargarInforme = () => {
-    // Crear un texto para el informe
     let texto = `INFORME DE VENTAS\n`;
     texto += `Período: ${fechaInicio} al ${fechaFin}\n`;
-    if (clienteSeleccionado) {
+    if (clienteSeleccionado !== "_all") {
       const cliente = clientes.find(c => c.id === clienteSeleccionado);
       texto += `Cliente: ${cliente ? cliente.nombre : 'No encontrado'}\n`;
     }
@@ -301,7 +284,6 @@ const Informes = () => {
       texto += `Venta #${index + 1} - Fecha: ${venta.fecha} - Cliente: ${cliente ? cliente.nombre : 'No encontrado'} - Total: $${venta.precioTotal.toFixed(2)}\n`;
     });
     
-    // Crear el archivo y descargarlo
     const blob = new Blob([texto], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -313,19 +295,16 @@ const Informes = () => {
     URL.revokeObjectURL(url);
   };
   
-  // Función para formatear fechas en el gráfico
   const formatearFechaGrafico = (fecha: string) => {
     const date = new Date(fecha);
     return `${date.getDate()}/${date.getMonth() + 1}`;
   };
   
-  // Obtener nombre de cliente
   const getClienteNombre = (clienteId: string) => {
     const cliente = clientes.find(c => c.id === clienteId);
     return cliente ? cliente.nombre : "Cliente no encontrado";
   };
   
-  // Custom tooltip formatter for the charts
   const formatTooltipValue = (value: number) => {
     return [`$${value.toFixed(2)}`, 'Total'];
   };
@@ -426,7 +405,7 @@ const Informes = () => {
                 <SelectValue placeholder="Todos los clientes" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos los clientes</SelectItem>
+                <SelectItem value="_all">Todos los clientes</SelectItem>
                 {clientes.map(cliente => (
                   <SelectItem key={cliente.id} value={cliente.id}>
                     {cliente.nombre}
