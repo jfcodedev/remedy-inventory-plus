@@ -19,8 +19,46 @@ import {
   Legend, 
   ResponsiveContainer,
   LineChart,
-  Line 
+  Line,
+  TooltipProps
 } from 'recharts';
+
+// Define proper types for the data objects
+interface VentaFiltrada {
+  id: string;
+  clienteId: string;
+  productos: {
+    productoId: string;
+    cantidad: number;
+    precioUnitario: number;
+    subtotal: number;
+  }[];
+  precioTotal: number;
+  fecha: string;
+  metodoPago: "efectivo" | "transferencia" | "tarjeta" | "otro";
+  descuento?: number;
+}
+
+interface ProductoVendido {
+  id: string;
+  cantidad: number;
+  total: number;
+  nombre: string;
+  precioCompra: number;
+  precioVenta: number;
+  margenGanancia: number;
+}
+
+interface DatosGrafico {
+  fecha: string;
+  totalVentas: number;
+  cantidadVentas: number;
+}
+
+interface DatosGanancias {
+  fecha: string;
+  gananciaBruta: number;
+}
 
 const Informes = () => {
   const [ventas] = useVentas();
@@ -33,10 +71,10 @@ const Informes = () => {
   const [fechaInicio, setFechaInicio] = useState("");
   const [fechaFin, setFechaFin] = useState("");
   const [clienteSeleccionado, setClienteSeleccionado] = useState("");
-  const [ventasFiltradas, setVentasFiltradas] = useState([]);
-  const [productosMasVendidos, setProductosMasVendidos] = useState([]);
-  const [datosGraficoVentas, setDatosGraficoVentas] = useState([]);
-  const [datosGraficoGanancias, setDatosGraficoGanancias] = useState([]);
+  const [ventasFiltradas, setVentasFiltradas] = useState<VentaFiltrada[]>([]);
+  const [productosMasVendidos, setProductosMasVendidos] = useState<ProductoVendido[]>([]);
+  const [datosGraficoVentas, setDatosGraficoVentas] = useState<DatosGrafico[]>([]);
+  const [datosGraficoGanancias, setDatosGraficoGanancias] = useState<DatosGanancias[]>([]);
   
   useEffect(() => {
     // Establecer fechas por defecto
@@ -78,17 +116,17 @@ const Informes = () => {
       ventasFiltradas = ventasFiltradas.filter(venta => venta.clienteId === clienteSeleccionado);
     }
     
-    setVentasFiltradas(ventasFiltradas);
+    setVentasFiltradas(ventasFiltradas as VentaFiltrada[]);
     
     // Preparar datos para reportes
-    calcularProductosMasVendidos(ventasFiltradas);
-    prepararDatosGraficos(ventasFiltradas);
+    calcularProductosMasVendidos(ventasFiltradas as VentaFiltrada[]);
+    prepararDatosGraficos(ventasFiltradas as VentaFiltrada[]);
     
   }, [fechaInicio, fechaFin, clienteSeleccionado, ventas]);
   
-  const calcularProductosMasVendidos = (ventasFiltradas) => {
+  const calcularProductosMasVendidos = (ventasFiltradas: VentaFiltrada[]) => {
     // Contador de productos vendidos
-    const contadorProductos = {};
+    const contadorProductos: Record<string, { id: string; cantidad: number; total: number }> = {};
     
     ventasFiltradas.forEach(venta => {
       venta.productos.forEach(prod => {
@@ -124,7 +162,7 @@ const Informes = () => {
     setProductosMasVendidos(productosMasVendidos);
   };
   
-  const prepararDatosGraficos = (ventasFiltradas) => {
+  const prepararDatosGraficos = (ventasFiltradas: VentaFiltrada[]) => {
     if (ventasFiltradas.length === 0) {
       setDatosGraficoVentas([]);
       setDatosGraficoGanancias([]);
@@ -132,7 +170,7 @@ const Informes = () => {
     }
     
     // Agrupar ventas por fecha
-    const ventasPorFecha = {};
+    const ventasPorFecha: Record<string, DatosGrafico> = {};
     
     ventasFiltradas.forEach(venta => {
       const fecha = venta.fecha;
@@ -149,7 +187,7 @@ const Informes = () => {
     });
     
     // Calcular ganancias (margen de cada producto vendido)
-    const gananciasPorFecha = {};
+    const gananciasPorFecha: Record<string, DatosGanancias> = {};
     
     ventasFiltradas.forEach(venta => {
       const fecha = venta.fecha;
@@ -276,15 +314,24 @@ const Informes = () => {
   };
   
   // Función para formatear fechas en el gráfico
-  const formatearFechaGrafico = (fecha) => {
+  const formatearFechaGrafico = (fecha: string) => {
     const date = new Date(fecha);
     return `${date.getDate()}/${date.getMonth() + 1}`;
   };
   
   // Obtener nombre de cliente
-  const getClienteNombre = (clienteId) => {
+  const getClienteNombre = (clienteId: string) => {
     const cliente = clientes.find(c => c.id === clienteId);
     return cliente ? cliente.nombre : "Cliente no encontrado";
+  };
+  
+  // Custom tooltip formatter for the charts
+  const formatTooltipValue = (value: number) => {
+    return [`$${value.toFixed(2)}`, 'Total'];
+  };
+
+  const formatGananciaValue = (value: number) => {
+    return [`$${value.toFixed(2)}`, 'Ganancia'];
   };
   
   return (
@@ -535,7 +582,7 @@ const Informes = () => {
                       />
                       <YAxis />
                       <Tooltip 
-                        formatter={(value) => [`$${value.toFixed(2)}`, 'Total']}
+                        formatter={(value: number) => [`$${value.toFixed(2)}`, 'Total']}
                         labelFormatter={(value) => `Fecha: ${new Date(value).toLocaleDateString('es-ES')}`}
                       />
                       <Legend />
@@ -577,7 +624,7 @@ const Informes = () => {
                       />
                       <YAxis />
                       <Tooltip 
-                        formatter={(value) => [`$${value.toFixed(2)}`, 'Ganancia']}
+                        formatter={(value: number) => [`$${value.toFixed(2)}`, 'Ganancia']}
                         labelFormatter={(value) => `Fecha: ${new Date(value).toLocaleDateString('es-ES')}`}
                       />
                       <Legend />

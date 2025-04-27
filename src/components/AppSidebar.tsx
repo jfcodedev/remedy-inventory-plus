@@ -10,7 +10,6 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-  SidebarMenuTrigger,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 
@@ -66,13 +65,13 @@ export function AppSidebar() {
         <SidebarMenu>
           {menuItems.map((item) => (
             <SidebarMenuItem key={item.title}>
-              <SidebarMenuTrigger 
+              <SidebarMenuButton 
                 active={location.pathname === item.url}
                 className={location.pathname === item.url ? "bg-primary/10 text-primary" : ""}
               >
                 <item.icon className="h-5 w-5" />
                 <span>{item.title}</span>
-              </SidebarMenuTrigger>
+              </SidebarMenuButton>
               <SidebarMenuButton asChild>
                 <Link to={item.url} className="w-full"></Link>
               </SidebarMenuButton>

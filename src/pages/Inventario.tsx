@@ -170,9 +170,9 @@ const Inventario = () => {
         case "cantidad-desc":
           return b.cantidad - a.cantidad;
         case "vencimiento-asc":
-          return new Date(a.fechaVencimiento) - new Date(b.fechaVencimiento);
+          return new Date(a.fechaVencimiento).getTime() - new Date(b.fechaVencimiento).getTime();
         case "vencimiento-desc":
-          return new Date(b.fechaVencimiento) - new Date(a.fechaVencimiento);
+          return new Date(b.fechaVencimiento).getTime() - new Date(a.fechaVencimiento).getTime();
         default:
           return 0;
       }
