@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useVentas, useProductos, useClientes, ProductoVenta, Venta, Cliente, Producto } from "@/lib/store";
 import { Button } from "@/components/ui/button";
@@ -472,7 +471,7 @@ const Ventas = () => {
                   <SelectValue placeholder="Todos los clientes" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos los clientes</SelectItem>
+                  <SelectItem value="_all">Todos los clientes</SelectItem>
                   {clientes.map(cliente => (
                     <SelectItem key={cliente.id} value={cliente.id}>
                       {cliente.nombre}

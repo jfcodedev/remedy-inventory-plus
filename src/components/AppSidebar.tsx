@@ -66,7 +66,7 @@ export function AppSidebar() {
           {menuItems.map((item) => (
             <SidebarMenuItem key={item.title}>
               <SidebarMenuButton 
-                active={location.pathname === item.url}
+                isActive={location.pathname === item.url}
                 className={location.pathname === item.url ? "bg-primary/10 text-primary" : ""}
               >
                 <item.icon className="h-5 w-5" />
