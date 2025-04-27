@@ -1,6 +1,5 @@
-
 import { useState } from "react";
-import { useClientes, Cliente, useVentas } from "@/lib/store";
+import { useClientes, Cliente, useVentas, Producto, useProductos } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -14,6 +13,7 @@ import { toast } from "sonner";
 const Clientes = () => {
   const [clientes, setClientes] = useClientes();
   const [ventas] = useVentas();
+  const [productos] = useProductos();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [filtro, setFiltro] = useState("");
   const [ordenPor, setOrdenPor] = useState("nombre");
@@ -92,6 +92,23 @@ const Clientes = () => {
     toast.success("Cliente eliminado correctamente");
   };
   
+  // Función para obtener los productos de un cliente
+  const getProductosCliente = (cliente: Cliente) => {
+    const ventasCliente = ventas.filter(v => v.clienteId === cliente.id);
+    const productosComprados = new Set<string>();
+    
+    ventasCliente.forEach(venta => {
+      venta.productos.forEach(p => {
+        const producto = productos.find(prod => prod.id === p.productoId);
+        if (producto) {
+          productosComprados.add(producto.nombre);
+        }
+      });
+    });
+    
+    return Array.from(productosComprados);
+  };
+
   // Filtrar y ordenar clientes
   const clientesFiltrados = clientes
     .filter(cliente =>
@@ -297,7 +314,7 @@ const Clientes = () => {
                     <TableHead>Nombre</TableHead>
                     <TableHead>Documento</TableHead>
                     <TableHead>Contacto</TableHead>
-                    <TableHead>Dirección</TableHead>
+                    <TableHead>Productos Comprados</TableHead>
                     <TableHead>Total Compras</TableHead>
                     <TableHead className="text-right">Acciones</TableHead>
                   </TableRow>
@@ -311,7 +328,19 @@ const Clientes = () => {
                         <div>{cliente.email}</div>
                         <div className="text-muted-foreground">{cliente.telefono}</div>
                       </TableCell>
-                      <TableCell>{cliente.direccion}</TableCell>
+                      <TableCell>
+                        <div className="max-w-xs space-y-1">
+                          {getProductosCliente(cliente).length > 0 ? (
+                            getProductosCliente(cliente).map((producto, index) => (
+                              <div key={index} className="text-sm">
+                                • {producto}
+                              </div>
+                            ))
+                          ) : (
+                            <span className="text-muted-foreground text-sm">No hay compras</span>
+                          )}
+                        </div>
+                      </TableCell>
                       <TableCell>${cliente.totalCompras.toFixed(2)}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
@@ -377,6 +406,21 @@ const Clientes = () => {
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Dirección:</span>
                       <span>{cliente.direccion || "-"}</span>
+                    </div>
+                    <div className="space-y-2">
+                      <span className="text-muted-foreground text-sm">Productos Comprados:</span>
+                      <div className="space-y-1 text-sm">
+                        {getProductosCliente(cliente).length > 0 ? (
+                          getProductosCliente(cliente).map((producto, index) => (
+                            <div key={index} className="flex items-center gap-2">
+                              <span>•</span>
+                              <span>{producto}</span>
+                            </div>
+                          ))
+                        ) : (
+                          <span className="text-muted-foreground">No hay compras</span>
+                        )}
+                      </div>
                     </div>
                     <div className="flex justify-between text-sm pt-2 border-t">
                       <span className="text-muted-foreground">Total Compras:</span>
